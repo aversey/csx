@@ -1,0 +1,19 @@
+    Description
+CSX Library (libcsx) extends C with S-Expressions.
+
+    Overview
+CSX is free and open-source software: legal info is in the 'LICENSE' file.
+For detailed documentation look into 'man' directory.
+
+    Compiling
+...
+
+    Examples
+Running 'make examples' produces executable for each example in 'examples'.
+Descriptions and details are in corresponding source files.
+
+    Usage
+...
+
+    Motivation
+You can do such things in C, this fact should be more known.
