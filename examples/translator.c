@@ -14,7 +14,7 @@ void readlist()
             readlist();
             printf("0)");
             c = getchar();
-        } else if (isdigit(c)) {
+        } else if (isdigit(c) || c == '-') {
             if (first) first = 0;
             else putchar(',');
             printf("csx_num(");

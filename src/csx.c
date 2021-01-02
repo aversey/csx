@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 
 typedef enum csx_type {
@@ -380,7 +381,33 @@ static void *base_context(void *arg)
 
 static void *base_quote(void *arg)
 {
-    return arg;
+    return head(arg);
+}
+
+static void *base_input(void *arg)
+{
+    int res = getchar();
+    return res != EOF ? new_num(res) : null;
+}
+
+static void *base_output(void *arg)
+{
+    arg = eval_each(arg);
+    return putchar(*(int *)head(arg)) != EOF ? one : null;
+}
+
+static void *base_outname(void *arg)
+{
+    arg = eval_each(arg);
+    return fputs(head(arg), stdout) != EOF ? one : null;
+}
+
+static void *base_outnum(void *arg)
+{
+    arg = eval_each(arg);
+    int num = *(int *)head(arg);
+    printf("%d", num);
+    return one;
 }
 
 static void *base_fn(void *arg)
@@ -500,6 +527,10 @@ static void new_context()
     base_define(csx_list(new_name("if"), new_base(base_if), 0));
     base_define(csx_list(new_name("and"), new_base(base_and), 0));
     base_define(csx_list(new_name("or"), new_base(base_or), 0));
+    base_define(csx_list(new_name("input"), new_base(base_input), 0));
+    base_define(csx_list(new_name("output"), new_base(base_output), 0));
+    base_define(csx_list(new_name("outname"), new_base(base_outname), 0));
+    base_define(csx_list(new_name("outnum"), new_base(base_outnum), 0));
 }
 
 
