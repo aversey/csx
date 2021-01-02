@@ -21,7 +21,7 @@ void process()
     char *fib = csx_name("fib");
     char *num = csx_name("num");
     csx_eval(l(define, fib, l(fn, l(num, 0),
-        l(csx_if, l(inc, num, n(2), 0), n(1),
+        l(csx_if, l(inc, num, n(3), 0), n(1),
             l(sum,
                 l(fib, l(diff, num, n(1), 0), 0),
                 l(fib, l(diff, num, n(2), 0), 0),

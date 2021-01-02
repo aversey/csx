@@ -35,7 +35,7 @@ MAN      = man
 # Library itself:
 LIB      = libcsx.a
 # Modules:
-EXTERNAL = $(foreach x,$(notdir $(wildcard $(INCLUDE)/csx/*.h)),$(x:.h=))
+EXTERNAL = $(foreach x,$(notdir $(wildcard $(INCLUDE)/*.h)),$(x:.h=))
 INTERNAL = $(foreach x,$(notdir $(wildcard $(SRCDIR)/*.h)),$(x:.h=))
 
 # Default target is library:
@@ -53,7 +53,7 @@ EXAMPLES = $(foreach x,$(XSRC:.c=),$(BUILD)/$(x))
 # Dependency file:
 DEPS     = deps.mk
 
-SRCINC   = -I$(INCLUDE)/csx
+SRCINC   = -I$(INCLUDE)
 XINC     = -I$(INCLUDE)
 SRCBUILD = $(BUILD)/$(SRCDIR)
 XBLD     = $(BUILD)/$(EXADIR)

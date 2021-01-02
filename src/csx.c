@@ -24,7 +24,7 @@ typedef struct pair_data {
 
 /* typedef char name_data; */
 
-typedef csx_base_data base_data;
+/* typedef csx_base_data base_data; */
 
 /* typedef int num_data; */
 
@@ -70,9 +70,9 @@ static char *new_name(const char *name)
     return res;
 }
 
-static base_data *new_base(base_data base)
+static csx_base_data *new_base(csx_base_data base)
 {
-    base_data *res = new(type_base, sizeof(base_data));
+    csx_base_data *res = new(type_base, sizeof(csx_base_data));
     *res = base;
     return res;
 }
@@ -133,7 +133,7 @@ static void *base_define(void *arg)
 {
     pair_data *res;
     void *name = head(arg);
-    void *value = head(tail(arg));
+    void *value = csx_eval(head(tail(arg)));
     if (type(context) == type_null) {
         void *nameval = new_pair(name, value);
         context = new_pair(new_pair(nameval, null), null);
@@ -171,22 +171,10 @@ static void *base_is_name(void *arg)
     return type(head(arg)) == type_name ? one : null;
 }
 
-static void *base_is_base(void *arg)
-{
-    arg = eval_each(arg);
-    return type(head(arg)) == type_base ? one : null;
-}
-
 static void *base_is_num(void *arg)
 {
     arg = eval_each(arg);
     return type(head(arg)) == type_num ? one : null;
-}
-
-static void *base_is_fn(void *arg)
-{
-    arg = eval_each(arg);
-    return type(head(arg)) == type_fn ? one : null;
 }
 
 static void *base_sum(void *arg)
@@ -436,7 +424,7 @@ tailcall:
         void *ops = tail(arg);
 applycall:
         if (type(fn) == type_base) {
-            base_data *base = fn;
+            csx_base_data *base = (void *)fn;
             if (*base == base_eval) {
                 ops = eval_each(ops);
                 arg = head(ops);
@@ -510,6 +498,8 @@ static void new_context()
     base_define(csx_list(new_name("define"), new_base(base_define), 0));
     base_define(csx_list(new_name("fn"), new_base(base_fn), 0));
     base_define(csx_list(new_name("if"), new_base(base_if), 0));
+    base_define(csx_list(new_name("and"), new_base(base_and), 0));
+    base_define(csx_list(new_name("or"), new_base(base_or), 0));
 }
 
 
