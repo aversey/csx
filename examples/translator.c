@@ -17,7 +17,7 @@ void readlist()
         } else if (isdigit(c) || c == '-') {
             if (first) first = 0;
             else putchar(',');
-            printf("csx_num(");
+            printf("csx_int(");
             putchar(c);
             c = getchar();
             while (c != EOF && isdigit(c)) {
@@ -47,7 +47,7 @@ int main()
     puts("#include <csx.h>");
     puts("int main()");
     puts("{");
-    printf("csx_eval(csx_list(csx_name(\"do\"),");
+    printf("csx_run(csx_list(csx_name(\"do\"),");
     readlist();
     puts("0));");
     puts("return 0;");

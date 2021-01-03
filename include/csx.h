@@ -5,13 +5,16 @@
 typedef void *(csx_list_fn)(void *head, ...);
 void *csx_list(void *head, ...);
 
-typedef int *(csx_num_fn)(int num);
-int *csx_num(int num);
+typedef void *(csx_dot_fn)(void *a, void *b, void *c, ...);
+void *csx_dot(void *a, void *b, void *c, ...);
 
-void *csx_eval(void *expression);
+typedef int *(csx_int_fn)(int num);
+int *csx_int(int num);
+
+void *csx_run(void *expression);
 
 typedef void *(*csx_base_data)(void *arg);
-void *csx_base(csx_base_data base);
+csx_base_data *csx_base(csx_base_data base);
 
 char *csx_name(const char *name);
 
