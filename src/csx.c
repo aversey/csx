@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 
 static void init();
@@ -146,7 +147,7 @@ static void *base_set(void *arg)
 {
     pair_data *res;
     void *name = head(arg);
-    void *value = head(tail(arg));
+    void *value = csx_run(head(tail(arg)));
     if (type(context) == type_null) {
         void *nameval = new_pair(name, value);
         context = new_pair(new_pair(nameval, null), null);
@@ -202,7 +203,7 @@ static void *base_tail(void *arg)
 
 static void *base_quote(void *arg)
 {
-    return arg;
+    return head(arg);
 }
 
 static void *base_same(void *arg)
@@ -293,6 +294,12 @@ static void *base_inv(void *arg)
     return csx_int(0);
 }
 
+static void *base_div(void *arg)
+{
+    arg = run_each(arg);
+    return csx_int(*(int *)head(arg) / *(int *)head(tail(arg)));
+}
+
 static void *base_mod(void *arg)
 {
     arg = run_each(arg);
@@ -327,6 +334,21 @@ static void *base_dec(void *arg)
         arg = tail(arg);
     }
     return one;
+}
+
+
+static void *base_out(void *arg)
+{
+    arg = run_each(arg);
+    int res = putchar(*(int *)head(arg));
+    return res != EOF ? one : null;
+}
+
+static void *base_in(void *arg)
+{
+    arg = run_each(arg);
+    int res = getchar();
+    return res != EOF ? csx_int(res) : null;
 }
 
 
@@ -398,9 +420,12 @@ static void new_context()
     base_set(csx_list(csx_name("*"), csx_base(base_prod), 0));
     base_set(csx_list(csx_name("neg"), csx_base(base_neg), 0));
     base_set(csx_list(csx_name("inv"), csx_base(base_inv), 0));
+    base_set(csx_list(csx_name("div"), csx_base(base_div), 0));
     base_set(csx_list(csx_name("mod"), csx_base(base_mod), 0));
     base_set(csx_list(csx_name("<"), csx_base(base_inc), 0));
     base_set(csx_list(csx_name(">"), csx_base(base_dec), 0));
+    base_set(csx_list(csx_name("out"), csx_base(base_out), 0));
+    base_set(csx_list(csx_name("in"), csx_base(base_in), 0));
     base_set(csx_list(csx_name("run"), csx_base(csx_run), 0));
 }
 
