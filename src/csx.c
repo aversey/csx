@@ -97,6 +97,7 @@ int *csx_int(int num)
     }
     int *res = new(type_int, sizeof(int));
     *res = num;
+    ints = new_pair(res, ints);
     return res;
 }
 
@@ -441,6 +442,8 @@ static void new_context()
 static void init()
 {
     initiated = 1;
+    setbuf(stdin, 0);
+    setbuf(stdout, 0);
     null = new(type_null, 0);
     names = null;
     ints = null;
