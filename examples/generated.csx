@@ -18,3 +18,11 @@
 [set id [fn args args]]
 [outint [[id 42 13 31] 2]]
 [out 10]
+[out ["Hello!" 1]]
+[out 10]
+[set outstr [fn [str] [if str
+  [do [out [head str]] [outstr [tail str]]]
+  []
+]]]
+[outstr "Hello, World!"]
+[out 10]

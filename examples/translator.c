@@ -40,6 +40,7 @@ void readlist()
             if (first) first = 0;
             else putchar(',');
             printf("csx_str(\"");
+            c = getchar();
             while (c != EOF && c != '"') {
                 if (c == '\\') c = getchar();
                 if (c == '"' || c == '\\') putchar('\\');
@@ -47,6 +48,7 @@ void readlist()
                 c = getchar();
             }
             printf("\")");
+            c = getchar();
         } else if (c == '\'') {
             if (first) first = 0;
             else putchar(',');

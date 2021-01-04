@@ -497,5 +497,5 @@ void *csx_str(const char *str)
         *p = new_pair(csx_int(*str), null);
         p = (pair_data **)&(*p)->tail;
     }
-    return res;
+    return new_pair(csx_name("quote"), new_pair(res, null));
 }
