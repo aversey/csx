@@ -15,3 +15,6 @@
 [map [fn [n] [outint n] [out 10]]
   [quote [99 37 73 42]]
 ]
+[set id [fn args args]]
+[outint [[id 42 13 31] 2]]
+[out 10]

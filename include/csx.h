@@ -18,5 +18,7 @@ csx_base_data *csx_base(csx_base_data base);
 
 char *csx_name(const char *name);
 
+void *csx_str(const char *str);
+
 
 #endif

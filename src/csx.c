@@ -360,6 +360,8 @@ static void *zip(void *params, void *values)
         params = tail(params);
         values = tail(values);
     }
+    if (type(params) == type_name)
+        res = new_pair(new_pair(params, values), res);
     return res;
 }
 
@@ -392,6 +394,13 @@ tailcall:
             res = base_do(fn->body);
             context = saved;
             return res;
+        } else if (type(fn) == type_pair) {
+            pair_data *res = (void *)fn;
+            int pos = *(int *)head(ops);
+            while (pos--) res = res->tail;
+            return res->head;
+        } else if (type(fn) == type_null) {
+            return null;
         } else {
             exit(1);
         }
@@ -475,5 +484,18 @@ void *csx_dot(void *a, void *b, void *c, ...)
         p = (pair_data **)&(*p)->tail;
     }
     va_end(args);
+    return res;
+}
+
+void *csx_str(const char *str)
+{
+    if (!initiated) init();
+    if (!str || !*str) return null;
+    pair_data *res = new_pair(csx_int(*str), null);
+    pair_data **p = (pair_data **)&res->tail;
+    while (*++str) {
+        *p = new_pair(csx_int(*str), null);
+        p = (pair_data **)&(*p)->tail;
+    }
     return res;
 }
