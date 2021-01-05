@@ -190,6 +190,7 @@ static void *base_is_set(void *arg)
 
 static void *base_sethead(void *arg)
 {
+    arg = run_each(arg);
     pair_data *p = head(arg);
     p->head = head(tail(arg));
     return null;
@@ -197,6 +198,7 @@ static void *base_sethead(void *arg)
 
 static void *base_settail(void *arg)
 {
+    arg = run_each(arg);
     pair_data *p = head(arg);
     p->tail = head(tail(arg));
     return null;
@@ -421,6 +423,18 @@ static void *base_len(void *arg)
     return csx_int(len);
 }
 
+static void *base_run(void *arg)
+{
+    arg = run_each(arg);
+    if (type(tail(arg)) == type_null) return csx_run(head(arg));
+    void *saved = context;
+    context = head(tail(arg));
+    void *res = csx_run(head(arg));
+    void *rescontext = context;
+    context = saved;
+    return new_pair(res, rescontext);
+}
+
 
 static void *zip(void *params, void *values)
 {
@@ -485,6 +499,21 @@ tailcall:
 }
 
 
+static void *base_context(void *args)
+{
+    return context;
+}
+
+static void new_context();
+static void *base_newcontext(void *args)
+{
+    void *saved = context;
+    new_context();
+    void *res = context;
+    context = saved;
+    return res;
+}
+
 static void new_context()
 {
     context = new_pair(null, null);
@@ -515,7 +544,9 @@ static void new_context()
     base_set(csx_list(csx_name("name"), csx_base(base_name), 0));
     base_set(csx_list(csx_name("str"), csx_base(base_str), 0));
     base_set(csx_list(csx_name("len"), csx_base(base_len), 0));
-    base_set(csx_list(csx_name("run"), csx_base(csx_run), 0));
+    base_set(csx_list(csx_name("run"), csx_base(base_run), 0));
+    base_set(csx_list(csx_name("context"), csx_base(base_context), 0));
+    base_set(csx_list(csx_name("newcontext"), csx_base(base_newcontext), 0));
 }
 
 static void init()

@@ -59,7 +59,7 @@
 
 { The Program }
 
-[output "Hello, I am Casey Shawn Exton.  " "What is your name?" newline]
+[output "Hello, I am Casey Shawn Exton.  What is your name?" newline]
 [output "> "]
 [set name [instr]]
 [output "Nice to meet you, " name "." newline]

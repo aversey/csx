@@ -20,16 +20,25 @@ void name(char a)
     printf("\")");
 }
 
-void num(char a)
+void num(char a, char b)
 {
     printf("csx_int(");
     if (a) putchar(a);
+    if (b) putchar(b);
     c = getchar();
     while (c != EOF && isdigit(c)) {
         putchar(c);
         c = getchar();
     }
     printf(")");
+}
+
+void list()
+{
+    printf("csx_list(");
+    items();
+    printf("0)");
+    c = getchar();
 }
 
 void pair()
@@ -42,12 +51,15 @@ void pair()
     } else name('=');
 }
 
-void list()
+void quote()
 {
-    printf("csx_list(");
-    items();
-    printf("0)");
+    printf("csx_list(csx_name(\"quote\"),");
     c = getchar();
+    if (c == '[') list();
+    else if (c == '=') pair();
+    else if (c == '\'') quote();
+    else name(0);
+    printf(",0)");
 }
 
 void skip()
@@ -75,9 +87,9 @@ void items()
         if (first) first = 0; else putchar(',');
         if (c == '[') list();
         else if (c == '-')
-            if (isdigit(c = getchar())) num('-');
+            if (isdigit(c = getchar())) num('-', c);
             else name('-');
-        else if (isdigit(c)) num(c);
+        else if (isdigit(c)) num(c, 0);
         else if (c == '=') pair();
         else if (c == '"') {
             printf("csx_str(\"");
@@ -90,14 +102,8 @@ void items()
             }
             printf("\")");
             c = getchar();
-        } else if (c == '\'') {
-            printf("csx_list(csx_name(\"quote\"),");
-            c = getchar();
-            if (c == '[') list();
-            else if (c == '=') pair();
-            else name(0);
-            printf(",0)");
-        } else name(0);
+        } else if (c == '\'') quote();
+        else name(0);
         skip();
     }
     if (!first) putchar(',');
