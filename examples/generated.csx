@@ -17,6 +17,16 @@
   [set c [in]]
   [if [no [same c 10]] [pair c [instr]]]
 ]]
+[set outints [fn [l]
+  [set outcontent [fn [l]
+    [if l [do [outint [head l]] [out 32] [outcontent [tail l]]]]
+  ]]
+  [out 91] [outcontent l] [out 93]
+]]
+[set rappend [fn [a b] [if a [rappend [tail a] [pair [head a] b]] b]]]
+[set rev [fn [l] [rappend l []]]]
+[set append [fn [a b] [rappend [rev a] b]]]
+[set backwards [sx body [pair 'do [rev body]]]]
 
 [outstr "-= loaded =-"]
 [newline]
@@ -30,3 +40,8 @@
 [newline]
 [outstr "I have to go.  Goodbye!"]
 [newline]
+
+[backwards
+  [outstr magic]
+  [set magic [rev "magic"]]
+]
