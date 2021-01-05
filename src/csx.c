@@ -15,7 +15,8 @@ typedef enum csx_type {
     type_name,
     type_base,
     type_int,
-    type_fn
+    type_fn,
+    type_sx
 } csx_type;
 
 static csx_type type(void *p)
@@ -222,6 +223,7 @@ static void *base_type(void *arg)
     case type_base: return csx_name("base");
     case type_int:  return csx_name("int");
     case type_fn:   return csx_name("fn");
+    case type_sx:   return csx_name("sx");
     }
     return 0;
 }
@@ -246,12 +248,20 @@ static void *base_fn(void *arg)
     return res;
 }
 
+static void *base_sx(void *arg)
+{
+    fn_data *res = new(type_sx, sizeof(fn_data));
+    res->params = head(arg);
+    res->body = tail(arg);
+    res->context = context;
+    return res;
+}
+
 static void *base_if(void *arg)
 {
-    void *saved = context;
-    void *res = csx_run(head(arg));
-    context = saved;
-    return type(res) != type_null ?
+    if (type(arg) != type_pair) return null;
+    if (type(tail(arg)) != type_pair) return csx_run(head(arg));
+    return type(csx_run(head(arg))) != type_null ?
         csx_run(head(tail(arg))) :
         csx_run(head(tail(tail(arg))));
 }
@@ -387,14 +397,19 @@ tailcall:
                 return (*base)(ops);
             }
         } else if (type(fn) == type_fn) {
-            void *saved;
             void *res;
+            void *saved = context;
             ops = run_each(ops);
-            saved = context;
             context = new_pair(zip(fn->params, ops), fn->context);
             res = base_do(fn->body);
             context = saved;
             return res;
+        } else if (type(fn) == type_sx) {
+            void *saved = context;
+            context = new_pair(zip(fn->params, ops), fn->context);
+            arg = base_do(fn->body);
+            context = saved;
+            goto tailcall;
         } else if (type(fn) == type_pair) {
             pair_data *res = (void *)fn;
             int pos = *(int *)head(ops);
@@ -425,6 +440,7 @@ static void new_context()
     base_set(csx_list(csx_name("type"), csx_base(base_type), 0));
     base_set(csx_list(csx_name("do"), csx_base(base_do), 0));
     base_set(csx_list(csx_name("fn"), csx_base(base_fn), 0));
+    base_set(csx_list(csx_name("sx"), csx_base(base_sx), 0));
     base_set(csx_list(csx_name("if"), csx_base(base_if), 0));
     base_set(csx_list(csx_name("+"), csx_base(base_sum), 0));
     base_set(csx_list(csx_name("*"), csx_base(base_prod), 0));
