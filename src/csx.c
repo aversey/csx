@@ -318,7 +318,7 @@ static void *base_prod(void *arg)
 static void *base_neg(void *arg)
 {
     arg = run_each(arg);
-    return csx_int(-*(int *)head(head(arg)));
+    return csx_int(-*(int *)head(arg));
 }
 
 static void *base_inv(void *arg)
