@@ -131,15 +131,15 @@
 ]]]
 
 [set readint [fn [num]
-  [if [head [head linep]] [if [< 47 [head [head linep]] 58] [do
+  [if [head linep] [if [< 47 [head [head linep]] 58] [do
     [set newnum [+ [* 10 num] [head [head linep]] -48]]
     [sethead linep [tail [head linep]]]
     [readint newnum]
   ] num] num]
 ]]
 
-[set readname [fn []
-  [if [head [head linep]] [if [no [same [head [head linep]] [" " 0]]]
+[set readname [fn [] [output [str [head linep]] newline]
+  [if [head linep] [if [no [same [head [head linep]] [" " 0]]]
     [if [no [same [head [head linep]] ["[" 0]]] [if [no [same [head [head linep]] ["]" 0]]] [do
       [if [same [head [head linep]] ["\\" 0]] [sethead linep [tail [head linep]]]]
       [set res [head [head linep]]]
@@ -150,7 +150,7 @@
 ]]
 
 [set readstr [fn []
-  [if [head [head linep]] [if [no [same [head [head linep]] ["\"" 0]]][do
+  [if [head linep] [if [no [same [head [head linep]] ["\"" 0]]][do
     [if [same [head [head linep]] ["\\" 0]] [sethead linep [tail [head linep]]]]
     [set res [head [head linep]]]
     [sethead linep [tail [head linep]]]
@@ -158,7 +158,7 @@
   ] [sethead linep [tail [head linep]]]]]
 ]]
 
-[set readobj [fn [] [if
+[set readobj [fn [] [output [str [head linep]] newline] [if
   [same [head [head linep]] ["{" 0]] [do
     [sethead linep [tail [head linep]]]
     [readcomment]
@@ -195,13 +195,15 @@
     [str [readstr]]
   ]
   [< 47 [head [head linep]] 58] [readint 0]
-  [name [str [readname line]]]
+  [name [str [readname]]]
 ]]]
 
 [set read [fn [usercontext]
   [output "> "]
   [sethead linep [instrlist]]
-  [set res [run [readobj] usercontext]]
+  [set readed [readobj]]
+  [write readed] [output newline]
+  [set res [run readed usercontext]]
   [write [head res]]
   [output newline]
   [read [tail res]]
