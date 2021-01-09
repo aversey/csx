@@ -21,17 +21,66 @@ typedef enum csx_type {
     type_str
 } csx_type;
 
-static csx_type type(void *p)
+static void setmark(void *p)   { ((int *)p)[-2] = 1; }
+static int mark(void *p)       { return ((int *)p)[-2]; }
+static csx_type type(void *p)  { return ((int *)p)[-1]; }
+
+static void **objs = 0;
+static int objslen = 0;
+static int objssize;
+
+static void pushobj(void *p)
 {
-    return *((int *)p - 1);
+    if (!objs) {
+        objs = malloc(sizeof(void *));
+        objslen = 0;
+        objssize = 1;
+    }
+    if (objslen == objssize) {
+        objs = realloc(objs, (objssize *= 2) * sizeof(void *));
+    }
+    objs[objslen++] = p;
+}
+
+static void **stack = 0;
+static int stacklen = 0;
+static int stacksize;
+
+static void push(void *p)
+{
+    if (!stack) {
+        stack = malloc(sizeof(void *));
+        stacklen = 0;
+        stacksize = 1;
+    }
+    if (stacklen == stacksize) {
+        stack = realloc(stack, (stacksize *= 2) * sizeof(void *));
+    }
+    stack[stacklen++] = p;
+}
+
+static void *pop()
+{
+    return stack[--stacklen];
+}
+
+static void restore(int len)
+{
+    stacklen = len;
+    if (stacklen <= stacksize / 4) {
+        stacksize /= 2;
+        stack = realloc(stack, stacksize * sizeof(void *));
+    }
 }
 
 static void *new(csx_type type, int data_size)
 {
-    int *res = malloc(sizeof(int) + data_size);
+    int *res = malloc(sizeof(int) * 2 + data_size);
     if (!res) exit(1);
-    *res = type;
-    return res + 1;
+    res[0] = 0;
+    res[1] = type;
+    pushobj(res);
+    return res + 2;
 }
 
 
@@ -63,23 +112,68 @@ static int initiated = 0;
 static void *null;
 static void *one;
 static pair_data *context;
-static pair_data *names;
-static pair_data *ints;
-static pair_data *reals;
+
+
+static void deepmark(void *p)
+{
+    if (mark(p)) return;
+    setmark(p);
+    if (type(p) == type_pair) {
+        deepmark(head(p));
+        deepmark(tail(p));
+    } else if (type(p) == type_fn || type(p) == type_sx) {
+        fn_data *fn = p;
+        deepmark(fn->params);
+        deepmark(fn->body);
+        deepmark(fn->context);
+    }
+}
+
+static void sweep()
+{
+    void **old = objs;
+    int len = objslen;
+    int i;
+    objs = 0;
+    for (i = 0; i != len; ++i) {
+        if (*(int *)(old[i])) {
+            *(int *)(old[i]) = 0;
+            pushobj(old[i]);
+        } else {
+            free(old[i]);
+        }
+    }
+    free(old);
+}
+
+static void gc()
+{
+    int i;
+    static int lastlen = 0;
+    if (objslen < lastlen * 2) return;
+    setmark(null);
+    setmark(one);
+    deepmark(context);
+    for (i = 0; i != stacklen; ++i) {
+        deepmark(stack[i]);
+    }
+    sweep();
+    lastlen = objslen;
+}
 
 
 char *csx_name(const char *name)
 {
     if (!initiated) init();
     int namesize = strlen(name) + 1;
-    pair_data *p = names;
-    while (type(p) == type_pair) {
-        if (!memcmp(p->head, name, namesize)) return p->head;
-        p = p->tail;
+    int i;
+    for (i = 0; i != objslen; ++i) {
+        void *obj = (int *)(objs[i]) + 2;
+        if (type(obj) != type_name) continue;
+        if (!strncmp(obj, name, namesize)) return obj;
     }
     void *res = new(type_name, namesize);
     memcpy(res, name, namesize);
-    names = new_pair(res, names);
     return res;
 }
 
@@ -94,28 +188,28 @@ csx_base_data *csx_base(csx_base_data base)
 int *csx_int(int num)
 {
     if (!initiated) init();
-    pair_data *p = ints;
-    while (type(p) == type_pair) {
-        if (*(int *)p->head == num) return p->head;
-        p = p->tail;
+    int i;
+    for (i = 0; i != objslen; ++i) {
+        int *obj = (int *)(objs[i]) + 2;
+        if (type(obj) != type_int) continue;
+        if (*obj == num) return obj;
     }
     int *res = new(type_int, sizeof(int));
     *res = num;
-    ints = new_pair(res, ints);
     return res;
 }
 
 double *csx_float(double num)
 {
     if (!initiated) init();
-    pair_data *p = reals;
-    while (type(p) == type_pair) {
-        if (*(double *)p->head == num) return p->head;
-        p = p->tail;
+    int i;
+    for (i = 0; i != objslen; ++i) {
+        double *obj = (void *)((int *)(objs[i]) + 2);
+        if (type(obj) != type_real) continue;
+        if (*obj == num) return obj;
     }
     double *res = new(type_real, sizeof(double));
     *res = num;
-    ints = new_pair(res, ints);
     return res;
 }
 
@@ -123,16 +217,22 @@ double *csx_float(double num)
 static void *run_each(void *l)
 {
     if (type(l) != type_pair) return null;
+    push(l);
+    int ret = stacklen;
     pair_data *res = new_pair(csx_run(head(l)), null);
     pair_data **p = (pair_data **)&res->tail;
     l = tail(l);
     while (type(l) == type_pair) {
-        void *saved = context;
+        push(res);
+        int resret = stacklen;
         *p = new_pair(csx_run(head(l)), null);
         p = (pair_data **)&(*p)->tail;
-        context = saved;
+        restore(resret);
+        pop();
         l = tail(l);
     }
+    restore(ret);
+    pop();
     return res;
 }
 
@@ -165,11 +265,15 @@ static void *lookup(const char *name)
 static void *base_set(void *arg)
 {
     pair_data *res;
+    push(arg);
+    int ret = stacklen;
     void *name = head(arg);
     void *value = csx_run(head(tail(arg)));
     if (type(context) == type_null) {
         void *nameval = new_pair(name, value);
         context = new_pair(new_pair(nameval, null), null);
+        restore(ret);
+        pop();
         return null;
     }
     res = lookup_frame(name);
@@ -179,6 +283,8 @@ static void *base_set(void *arg)
         void **names = &context->head;
         *names = new_pair(new_pair(name, value), *names);
     }
+    restore(ret);
+    pop();
     return null;
 }
 
@@ -427,11 +533,13 @@ static void *base_run(void *arg)
 {
     arg = run_each(arg);
     if (type(tail(arg)) == type_null) return csx_run(head(arg));
-    void *saved = context;
+    push(context);
+    int ret = stacklen;
     context = head(tail(arg));
     void *res = csx_run(head(arg));
     void *rescontext = context;
-    context = saved;
+    restore(ret);
+    context = pop();
     return new_pair(res, rescontext);
 }
 
@@ -452,49 +560,74 @@ static void *zip(void *params, void *values)
 void *csx_run(void *arg)
 {
     if (!initiated) init();
+    push(arg);
+    int ret = stacklen;
 tailcall:
-    if (type(arg) == type_name) return lookup(arg);
-    else if (type(arg) == type_pair) {
+    gc();
+    if (type(arg) == type_name) {
+        restore(ret);
+        pop();
+        return lookup(arg);
+    } else if (type(arg) == type_pair) {
         fn_data *fn = csx_run(head(arg));
         void *ops = tail(arg);
+        push(fn);
         if (type(fn) == type_base) {
             csx_base_data *base = (void *)fn;
             if (*base == csx_run) {
                 ops = run_each(ops);
                 arg = head(ops);
+                push(arg);
                 goto tailcall;
             } else {
-                return (*base)(ops);
+                void *res = (*base)(ops);
+                restore(ret);
+                pop();
+                return res;
             }
         } else if (type(fn) == type_fn) {
             void *res;
-            void *saved = context;
+            push(context);
+            int fnret = stacklen;
             ops = run_each(ops);
             context = new_pair(zip(fn->params, ops), fn->context);
             res = base_do(fn->body);
-            context = saved;
+            restore(fnret);
+            context = pop();
+            restore(ret);
+            pop();
             return res;
         } else if (type(fn) == type_sx) {
-            void *saved = context;
+            push(context);
+            int sxret = stacklen;
             context = new_pair(zip(fn->params, ops), fn->context);
             arg = base_do(fn->body);
-            context = saved;
+            restore(sxret);
+            context = pop();
             goto tailcall;
         } else if (type(fn) == type_pair) {
             pair_data *res = (void *)fn;
             int pos = *(int *)csx_run(head(ops));
             while (pos--) res = res->tail;
+            restore(ret);
+            pop();
             return res->head;
         } else if (type(fn) == type_str) {
             char *res = (void *)fn;
             int pos = *(int *)csx_run(head(ops));
+            restore(ret);
+            pop();
             return csx_int(res[pos]);
         } else if (type(fn) == type_null) {
+            restore(ret);
+            pop();
             return null;
         } else {
             exit(1);
         }
     }
+    restore(ret);
+    pop();
     return arg;
 }
 
@@ -507,11 +640,17 @@ static void *base_context(void *args)
 static void new_context();
 static void *base_newcontext(void *args)
 {
-    void *saved = context;
+    push(context);
     new_context();
     void *res = context;
-    context = saved;
+    context = pop();
     return res;
+}
+
+static void *base_exit(void *args)
+{
+    csx_free();
+    exit(0);
 }
 
 static void new_context()
@@ -547,6 +686,7 @@ static void new_context()
     base_set(csx_list(csx_name("run"), csx_base(base_run), 0));
     base_set(csx_list(csx_name("context"), csx_base(base_context), 0));
     base_set(csx_list(csx_name("newcontext"), csx_base(base_newcontext), 0));
+    base_set(csx_list(csx_name("exit"), csx_base(base_exit), 0));
 }
 
 static void init()
@@ -555,10 +695,20 @@ static void init()
     setbuf(stdin, 0);
     setbuf(stdout, 0);
     null = new(type_null, 0);
-    names = null;
-    ints = null;
     one = csx_int(1);
     new_context();
+}
+
+void csx_free()
+{
+    initiated = 0;
+    while (objslen) {
+        free(objs[--objslen]);
+    }
+    free(objs);
+    free(stack);
+    objs = 0;
+    stack = 0;
 }
 
 

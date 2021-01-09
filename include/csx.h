@@ -23,5 +23,7 @@ char *csx_name(const char *name);
 
 char *csx_str(const char *str);
 
+void csx_free();
+
 
 #endif
