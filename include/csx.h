@@ -11,8 +11,8 @@ void *csx_pair(void *a, void *b, void *c, ...);
 typedef int *(csx_int_fn)(int num);
 int *csx_int(int num);
 
-typedef double *(csx_float_fn)(double num);
-double *csx_float(double num);
+typedef double *(csx_real_fn)(double num);
+double *csx_real(double num);
 
 void *csx_run(void *expression);
 

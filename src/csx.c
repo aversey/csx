@@ -188,26 +188,14 @@ csx_base_data *csx_base(csx_base_data base)
 int *csx_int(int num)
 {
     if (!initiated) init();
-    int i;
-    for (i = 0; i != objslen; ++i) {
-        int *obj = (int *)(objs[i]) + 2;
-        if (type(obj) != type_int) continue;
-        if (*obj == num) return obj;
-    }
     int *res = new(type_int, sizeof(int));
     *res = num;
     return res;
 }
 
-double *csx_float(double num)
+double *csx_real(double num)
 {
     if (!initiated) init();
-    int i;
-    for (i = 0; i != objslen; ++i) {
-        double *obj = (void *)((int *)(objs[i]) + 2);
-        if (type(obj) != type_real) continue;
-        if (*obj == num) return obj;
-    }
     double *res = new(type_real, sizeof(double));
     *res = num;
     return res;
@@ -336,6 +324,10 @@ static void *base_quote(void *arg)
 static void *base_same(void *arg)
 {
     arg = run_each(arg);
+    if (type(head(arg)) == type_int)
+        return *(int *)head(arg) == *(int *)head(tail(arg)) ? one : null;
+    if (type(head(arg)) == type_real)
+        return *(double *)head(arg) == *(double *)head(tail(arg)) ? one : null;
     return head(arg) == head(tail(arg)) ? one : null;
 }
 
