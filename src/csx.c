@@ -229,7 +229,7 @@ static void *lookup_frame(const char *name)
 {
     pair_data *frame = context->head;
     while (type(frame) == type_pair) {
-        if (!strcmp(head(frame->head), name)) return frame->head;
+        if (head(frame->head) == name) return frame->head;
         frame = frame->tail;
     }
     return null;

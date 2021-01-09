@@ -4,12 +4,23 @@
 
 
 int c;
+int indent = 0;
 
 
-void items();
+int items();
+
+void prindent()
+{
+    int i;
+    printf("\n    ");
+    for (i = 0; i != indent; ++i) {
+        printf("  ");
+    }
+}
 
 void name(char a)
 {
+    prindent();
     printf("csx_name(\"");
     if (a) putchar(a);
     while (c != EOF && !isspace(c) && c != '[' && c != ']') {
@@ -22,6 +33,7 @@ void name(char a)
 
 void num(char a, char b)
 {
+    prindent();
     printf("csx_int(");
     if (a) putchar(a);
     if (b) putchar(b);
@@ -35,8 +47,9 @@ void num(char a, char b)
 
 void list()
 {
+    prindent();
     printf("csx_list(");
-    items();
+    if (items()) prindent();
     printf("0)");
     c = getchar();
 }
@@ -44,8 +57,10 @@ void list()
 void pair()
 {
     if ((c = getchar()) == '[') {
+        prindent();
         printf("csx_pair(");
         items();
+        prindent();
         printf("0)");
         c = getchar();
     } else name('=');
@@ -53,13 +68,16 @@ void pair()
 
 void quote()
 {
-    printf("csx_list(csx_name(\"quote\"),");
+    prindent();
+    printf("csx_list(csx_name(\"quote\"),\n");
     c = getchar();
     if (c == '[') list();
     else if (c == '=') pair();
     else if (c == '\'') quote();
     else name(0);
-    printf(",0)");
+    printf(",\n");
+    prindent();
+    printf("0)");
 }
 
 void skip()
@@ -78,9 +96,10 @@ void skip()
     }
 }
 
-void items()
+int items()
 {
     int first = 1;
+    ++indent;
     c = getchar();
     skip();
     while (c != EOF && c != ']') {
@@ -92,6 +111,7 @@ void items()
         else if (isdigit(c)) num(c, 0);
         else if (c == '=') pair();
         else if (c == '"') {
+            prindent();
             printf("csx_str(\"");
             c = getchar();
             while (c != EOF && c != '"') {
@@ -107,12 +127,15 @@ void items()
         skip();
     }
     if (!first) putchar(',');
+    --indent;
+    return !first;
 }
 
 int main()
 {
-    printf("#include <csx.h>\nint main(){csx_run(csx_list(csx_name(\"do\"),");
+    printf("#include <csx.h>\n\nint main()\n{\n");
+    printf("    csx_run(csx_list(csx_name(\"do\"),");
     items();
-    printf("0));return 0;}\n");
+    printf("\n    0));\n    csx_free();\n    return 0;\n}\n");
     return 0;
 }
