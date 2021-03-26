@@ -21,7 +21,7 @@ void prindent()
 void name(char a)
 {
     prindent();
-    printf("csx_name(\"");
+    printf("N(\"");
     if (a) putchar(a);
     while (c != EOF && !isspace(c) && c != '[' && c != ']') {
         if (c == '"' || c == '\\') putchar('\\');
@@ -34,7 +34,7 @@ void name(char a)
 void num(char a, char b)
 {
     prindent();
-    printf("csx_int(");
+    printf("I(");
     if (a) putchar(a);
     if (b) putchar(b);
     c = getchar();
@@ -48,17 +48,17 @@ void num(char a, char b)
 void list()
 {
     prindent();
-    printf("csx_list(");
+    printf("L(");
     if (items()) prindent();
     printf("0)");
     c = getchar();
 }
 
-void pair()
+void dot()
 {
     if ((c = getchar()) == '[') {
         prindent();
-        printf("csx_pair(");
+        printf("D(");
         items();
         prindent();
         printf("0)");
@@ -69,10 +69,10 @@ void pair()
 void quote()
 {
     prindent();
-    printf("csx_list(csx_name(\"quote\"),\n");
+    printf("L(qt,\n");
     c = getchar();
     if (c == '[') list();
-    else if (c == '=') pair();
+    else if (c == '=') dot();
     else if (c == '\'') quote();
     else name(0);
     printf(",\n");
@@ -109,10 +109,10 @@ int items()
             if (isdigit(c = getchar())) num('-', c);
             else name('-');
         else if (isdigit(c)) num(c, 0);
-        else if (c == '=') pair();
+        else if (c == '=') dot();
         else if (c == '"') {
             prindent();
-            printf("csx_str(\"");
+            printf("S(\"");
             c = getchar();
             while (c != EOF && c != '"') {
                 if (c == '\\') c = getchar();
@@ -133,9 +133,9 @@ int items()
 
 int main()
 {
-    printf("#include <csx.h>\n\nint main()\n{\n");
-    printf("    csx_run(csx_list(csx_name(\"do\"),");
+    printf("#include <csxbind.h>\n\nint main()\n{\n");
+    printf("    init();\n    R(L(_do,");
     items();
-    printf("\n    0));\n    csx_free();\n    return 0;\n}\n");
+    printf("\n    0));\n    return 0;\n}\n");
     return 0;
 }

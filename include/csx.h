@@ -2,28 +2,84 @@
 #define CSX_INCLUDED
 
 
-typedef void *(csx_list_fn)(void *head, ...);
-void *csx_list(void *head, ...);
+typedef struct csxobj {
+    int mark;
+    char *type;
+    char data[1];  /* data is here only for easy conversion back */
+} csxobj;
 
-typedef void *(csx_pair_fn)(void *a, void *b, void *c, ...);
-void *csx_pair(void *a, void *b, void *c, ...);
+csxobj *csx_obj(void *p);
 
-typedef int *(csx_int_fn)(int num);
-int *csx_int(int num);
 
-typedef double *(csx_real_fn)(double num);
-double *csx_real(double num);
+typedef struct csxpair {
+    void *head;
+    void *tail;
+} csxpair;
 
-void *csx_run(void *expression);
 
-typedef void *(*csx_base_data)(void *arg);
-csx_base_data *csx_base(csx_base_data base);
+typedef struct csxbasenames {
+    char *name;
+    char *pair;
+    char *str;
+    char *_int;
+    char *base;
+    char *fn;
+    char *sx;
+    char *set;
+    char *_isset;
+    char *sethead;
+    char *settail;
+    char *head;
+    char *tail;
+    char *qt;
+    char *same;
+    char *type;
+    char *_do;
+    char *_if;
+    char *_plus;
+    char *_star;
+    char *neg;
+    char *div;
+    char *mod;
+    char *_less;
+    char *_more;
+    char *out;
+    char *in;
+    char *len;
+    char *run;
+    char *context;
+    char *newcontext;
+    char *_exit;
+} csxbasenames;
 
-char *csx_name(const char *name);
+typedef struct csxi {
+    void **objs;
+    int objslen;
+    int objssize;
+    void **stack;
+    int stacklen;
+    int stacksize;
+    int lastlen;
+    void *null;
+    int *one;
+    csxbasenames basenames;
+    csxpair *context;
+} csxi;
 
-char *csx_str(const char *str);
+void csx_init(csxi *csx);
+void csx_free(csxi *csx);
 
-void csx_free();
+csxpair *csx_list(csxi *csx, void *head, ...);
+csxpair *csx_dot(csxi *csx, void *a, void *b, void *c, ...);
+csxpair *csx_pair(csxi *csx, void *head, void *tail);
+char    *csx_name(csxi *csx, const char *name);
+char    *csx_str(csxi *csx, const char *str);
+int     *csx_int(csxi *csx, int num);
+
+void *csx_run(csxi *csx, void *expression);
+
+typedef void *(*csxbase)(csxi *csx, void *arg);
+csxbase *csx_base(csxi *csx, csxbase base);
 
 
 #endif

@@ -10,6 +10,8 @@ INCDIR  ?= /usr/include
 LIBDIR  ?= /usr/lib
 # Specify location of man pages on your machine:
 MANDIR  ?= /usr/share/man
+# Are you using Windows?
+WINDOWS ?= no
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -22,7 +24,7 @@ LFLAGS   = -L$(BUILD) -lcsx
 ifeq '$(DEBUG)' 'yes'
 CFLAGS  += -g -O0
 else
-CFLAGS  += -O3
+CFLAGS  += -O2
 LFLAGS  += -static
 endif
 
@@ -83,7 +85,9 @@ uninstall:
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #     Compilation
+ifneq '$(WINDOWS)' 'yes'
 -include $(DEPS)
+endif
 
 # Packing object files into library:
 $(TARGET): $(OBJ)
@@ -98,8 +102,10 @@ $(BUILD)/%: %.c $(TARGET)
 	$(COMPILE) $(CFLAGS) $(XINC) $< $(LFLAGS) -o $@
 
 # Create build directories, if no such:
+ifneq '$(WINDOWS)' 'yes'
 $(SRCBUILD) $(XBLD):
 	mkdir -p $@
+endif
 
 # Generate dependency file, adding corresponding build prefixes:
 $(DEPS): $(SRC) $(EXASRC) $(EXTER_H) $(INTER_H) $(INCLUDE)/csx.h
