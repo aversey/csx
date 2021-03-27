@@ -115,8 +115,40 @@ static void gc(csxi *csx)
 {
     int i;
     if (csx->objslen < csx->lastlen * 2) return;
-    csx_obj(csx->basenames.name)->mark = 1;
-    csx_obj(csx->basenames.pair)->mark = 1;
+    csx_obj(csx->basenames.name)->mark       = 1;
+    csx_obj(csx->basenames.pair)->mark       = 1;
+    csx_obj(csx->basenames.str)->mark        = 1;
+    csx_obj(csx->basenames._int)->mark       = 1;
+    csx_obj(csx->basenames.base)->mark       = 1;
+    csx_obj(csx->basenames.fn)->mark         = 1;
+    csx_obj(csx->basenames.sx)->mark         = 1;
+    csx_obj(csx->basenames.set)->mark        = 1;
+    csx_obj(csx->basenames._isset)->mark     = 1;
+    csx_obj(csx->basenames.sethead)->mark    = 1;
+    csx_obj(csx->basenames.settail)->mark    = 1;
+    csx_obj(csx->basenames.head)->mark       = 1;
+    csx_obj(csx->basenames.tail)->mark       = 1;
+    csx_obj(csx->basenames.qt)->mark         = 1;
+    csx_obj(csx->basenames.same)->mark       = 1;
+    csx_obj(csx->basenames.type)->mark       = 1;
+    csx_obj(csx->basenames._do)->mark        = 1;
+    csx_obj(csx->basenames._if)->mark        = 1;
+    csx_obj(csx->basenames._plus)->mark      = 1;
+    csx_obj(csx->basenames._star)->mark      = 1;
+    csx_obj(csx->basenames.neg)->mark        = 1;
+    csx_obj(csx->basenames.div)->mark        = 1;
+    csx_obj(csx->basenames.mod)->mark        = 1;
+    csx_obj(csx->basenames._less)->mark      = 1;
+    csx_obj(csx->basenames._more)->mark      = 1;
+    csx_obj(csx->basenames.out)->mark        = 1;
+    csx_obj(csx->basenames.in)->mark         = 1;
+    csx_obj(csx->basenames.len)->mark        = 1;
+    csx_obj(csx->basenames.run)->mark        = 1;
+    csx_obj(csx->basenames.context)->mark    = 1;
+    csx_obj(csx->basenames.newcontext)->mark = 1;
+    csx_obj(csx->basenames._exit)->mark      = 1;
+    csx_obj(csx->null)->mark                 = 1;
+    csx_obj(csx->one)->mark                  = 1;
     deepmark(csx, csx->context);
     for (i = 0; i != csx->stacklen; ++i) {
         deepmark(csx, csx->stack[i]);
@@ -627,9 +659,9 @@ static void init_the_name(csxi *csx)
 
 static char *init_basename(csxi *csx, const char *name)
 {
-    const int len = strlen(name);
-    char *res = new(csx, csx->basenames.name, len);
-    memcpy(res, name, len);
+    const int size = strlen(name) + 1;
+    char *res = new(csx, csx->basenames.name, size);
+    memcpy(res, name, size);
     return res;
 }
 
