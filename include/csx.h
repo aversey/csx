@@ -4,11 +4,10 @@
 
 typedef struct csxobj {
     int mark;
-    char *type;
-    char data[1];  /* data is here only for easy conversion back */
+    void *type;
 } csxobj;
 
-csxobj *csx_obj(void *p);
+csxobj *csx_obj(void *x);
 
 
 typedef struct csxpair {
@@ -53,7 +52,7 @@ typedef struct csxbasenames {
 } csxbasenames;
 
 typedef struct csxi {
-    void **objs;
+    csxobj **objs;
     int objslen;
     int objssize;
     void **stack;

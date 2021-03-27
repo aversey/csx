@@ -13,7 +13,7 @@ typedef struct fn_data {
 } fn_data;
 
 
-csxobj *csx_obj(void *p)  { return (csxobj *)((int *)p - 2); }
+csxobj *csx_obj(void *p)  { return (csxobj *)p - 1; }
 
 
 static void pushobj(csxi *csx, void *p)
@@ -57,12 +57,12 @@ static void restore(csxi *csx, int len)
 
 static void *new(csxi *csx, void *type, int data_size)
 {
-    csxobj *res = malloc(sizeof(*res) - 1 + data_size);
+    csxobj *res = malloc(sizeof(*res) + data_size);
     if (!res) exit(1);
     res->mark = 0;
     res->type = type;
     pushobj(csx, res);
-    return res->data;
+    return res + 1;
 }
 
 
@@ -82,6 +82,7 @@ static void deepmark(csxi *csx, void *p)
 {
     if (csx_obj(p)->mark) return;
     csx_obj(p)->mark = 1;
+    deepmark(csx, csx_obj(p)->type);
     if (csx_obj(p)->type == csx->basenames.pair) {
         deepmark(csx, head(p));
         deepmark(csx, tail(p));
@@ -96,13 +97,13 @@ static void deepmark(csxi *csx, void *p)
 
 static void sweep(csxi *csx)
 {
-    void **old = csx->objs;
+    csxobj **old = csx->objs;
     int len = csx->objslen;
     int i;
     csx->objs = 0;
     for (i = 0; i != len; ++i) {
-        if (*(int *)(old[i])) {
-            *(int *)(old[i]) = 0;
+        if (old[i]->mark) {
+            old[i]->mark = 0;
             pushobj(csx, old[i]);
         } else {
             free(old[i]);
@@ -115,40 +116,8 @@ static void gc(csxi *csx)
 {
     int i;
     if (csx->objslen < csx->lastlen * 2) return;
-    csx_obj(csx->basenames.name)->mark       = 1;
-    csx_obj(csx->basenames.pair)->mark       = 1;
-    csx_obj(csx->basenames.str)->mark        = 1;
-    csx_obj(csx->basenames._int)->mark       = 1;
-    csx_obj(csx->basenames.base)->mark       = 1;
-    csx_obj(csx->basenames.fn)->mark         = 1;
-    csx_obj(csx->basenames.sx)->mark         = 1;
-    csx_obj(csx->basenames.set)->mark        = 1;
-    csx_obj(csx->basenames._isset)->mark     = 1;
-    csx_obj(csx->basenames.sethead)->mark    = 1;
-    csx_obj(csx->basenames.settail)->mark    = 1;
-    csx_obj(csx->basenames.head)->mark       = 1;
-    csx_obj(csx->basenames.tail)->mark       = 1;
-    csx_obj(csx->basenames.qt)->mark         = 1;
-    csx_obj(csx->basenames.same)->mark       = 1;
-    csx_obj(csx->basenames.type)->mark       = 1;
-    csx_obj(csx->basenames._do)->mark        = 1;
-    csx_obj(csx->basenames._if)->mark        = 1;
-    csx_obj(csx->basenames._plus)->mark      = 1;
-    csx_obj(csx->basenames._star)->mark      = 1;
-    csx_obj(csx->basenames.neg)->mark        = 1;
-    csx_obj(csx->basenames.div)->mark        = 1;
-    csx_obj(csx->basenames.mod)->mark        = 1;
-    csx_obj(csx->basenames._less)->mark      = 1;
-    csx_obj(csx->basenames._more)->mark      = 1;
-    csx_obj(csx->basenames.out)->mark        = 1;
-    csx_obj(csx->basenames.in)->mark         = 1;
-    csx_obj(csx->basenames.len)->mark        = 1;
-    csx_obj(csx->basenames.run)->mark        = 1;
-    csx_obj(csx->basenames.context)->mark    = 1;
-    csx_obj(csx->basenames.newcontext)->mark = 1;
-    csx_obj(csx->basenames._exit)->mark      = 1;
-    csx_obj(csx->null)->mark                 = 1;
-    csx_obj(csx->one)->mark                  = 1;
+    csx_obj(csx->null)->mark = 1;
+    csx_obj(csx->one)->mark  = 1;
     deepmark(csx, csx->context);
     for (i = 0; i != csx->stacklen; ++i) {
         deepmark(csx, csx->stack[i]);
