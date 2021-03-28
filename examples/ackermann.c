@@ -4,7 +4,7 @@
 
 int main()
 {
-    init();
+    csxbind_init();
     char *m = N("m");
     char *n = N("n");
     char *ackermann = N("ackermann");
@@ -19,7 +19,8 @@ int main()
           0),
         0),
       0), 0),
-      L(ackermann, I(3), I(7), 0),
+      L(ackermann, I(3), I(3), 0),
     0)));
+    csxbind_free();
     return 0;
 }
