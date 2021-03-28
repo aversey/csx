@@ -38,7 +38,8 @@ extern char *context;
 extern char *newcontext;
 extern char *_exit;
 
-void init();
+void csxbind_init();
+void csxbind_free();
 
 csxpair *L(void *head, ...);
 csxpair *D(void *a, void *b, void *c, ...);

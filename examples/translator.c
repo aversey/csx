@@ -134,8 +134,8 @@ int items()
 int main()
 {
     printf("#include <csxbind.h>\n\nint main()\n{\n");
-    printf("    init();\n    R(L(_do,");
+    printf("    csxbind_init();\n    R(L(_do,");
     items();
-    printf("\n    0));\n    return 0;\n}\n");
+    printf("\n    0));\n    \n    csxbind_free();\n    return 0;\n}\n");
     return 0;
 }

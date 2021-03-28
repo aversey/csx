@@ -38,12 +38,10 @@ char *_exit;
 
 
 static csxi csx;
-static int initialised = 0;
 
 
-void init()
+void csxbind_init()
 {
-    initialised = 1;
     csx_init(&csx);
     csxbasenames *n = &csx.basenames;
     name       = n->name;
@@ -78,6 +76,11 @@ void init()
     context    = n->context;
     newcontext = n->newcontext;
     _exit      = n->_exit;
+}
+
+void csxbind_free()
+{
+    csx_free(&csx);
 }
 
 
