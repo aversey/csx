@@ -102,7 +102,7 @@ static void sweep(csxi *csx)
     int i;
     csx->objs = 0;
     for (i = 0; i != len; ++i) {
-        if (old[i]->mark) {
+        if (old[i]->mark || old[i]->type == csx->basenames.name) {
             old[i]->mark = 0;
             pushobj(csx, old[i]);
         } else {
@@ -112,48 +112,10 @@ static void sweep(csxi *csx)
     free(old);
 }
 
-static void mark_basenames(csxi *csx)
-{
-    csxbasenames *n = &csx->basenames;
-    csx_obj(n->name)->mark       = 1;
-    csx_obj(n->pair)->mark       = 1;
-    csx_obj(n->str)->mark        = 1;
-    csx_obj(n->_int)->mark       = 1;
-    csx_obj(n->base)->mark       = 1;
-    csx_obj(n->fn)->mark         = 1;
-    csx_obj(n->sx)->mark         = 1;
-    csx_obj(n->set)->mark        = 1;
-    csx_obj(n->_isset)->mark     = 1;
-    csx_obj(n->sethead)->mark    = 1;
-    csx_obj(n->settail)->mark    = 1;
-    csx_obj(n->head)->mark       = 1;
-    csx_obj(n->tail)->mark       = 1;
-    csx_obj(n->qt)->mark         = 1;
-    csx_obj(n->same)->mark       = 1;
-    csx_obj(n->type)->mark       = 1;
-    csx_obj(n->_do)->mark        = 1;
-    csx_obj(n->_if)->mark        = 1;
-    csx_obj(n->_plus)->mark      = 1;
-    csx_obj(n->_star)->mark      = 1;
-    csx_obj(n->neg)->mark        = 1;
-    csx_obj(n->div)->mark        = 1;
-    csx_obj(n->mod)->mark        = 1;
-    csx_obj(n->_less)->mark      = 1;
-    csx_obj(n->_more)->mark      = 1;
-    csx_obj(n->out)->mark        = 1;
-    csx_obj(n->in)->mark         = 1;
-    csx_obj(n->len)->mark        = 1;
-    csx_obj(n->run)->mark        = 1;
-    csx_obj(n->context)->mark    = 1;
-    csx_obj(n->newcontext)->mark = 1;
-    csx_obj(n->_exit)->mark      = 1;
-}
-
 static void gc(csxi *csx)
 {
     int i;
     if (csx->objslen < csx->lastlen * 2) return;
-    mark_basenames(csx);
     csx_obj(csx->null)->mark = 1;
     csx_obj(csx->one)->mark  = 1;
     deepmark(csx, csx->context);
