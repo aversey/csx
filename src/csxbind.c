@@ -42,8 +42,9 @@ static csxi csx;
 
 void csxbind_init()
 {
+    csxbasenames *n;
     csx_init(&csx);
-    csxbasenames *n = &csx.basenames;
+    n          = &csx.basenames;
     name       = n->name;
     pair       = n->pair;
     str        = n->str;

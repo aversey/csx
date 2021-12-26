@@ -17,7 +17,7 @@ WINDOWS ?= no
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #     Preparations
 # Compile as ANSI C code:
-CFLAGS   = -xc -ansi -Wall
+CFLAGS   = -xc -ansi -Wall -pedantic
 # Specify linker to use the library:
 LFLAGS   = -L$(BUILD) -lcsx
 # Debug and optimisation (as well as -static for valgrind) are not compatible:

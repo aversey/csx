@@ -4,10 +4,13 @@
 
 int main()
 {
+    char *m;
+    char *n;
+    char *ackermann;
     csxbind_init();
-    char *m = N("m");
-    char *n = N("n");
-    char *ackermann = N("ackermann");
+    m = N("m");
+    n = N("n");
+    ackermann = N("ackermann");
     printf("%d\n", *(int *)R(L(_do,
       L(set, ackermann, L(fn, L(m, n, 0),
         L(_if,

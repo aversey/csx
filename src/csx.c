@@ -129,6 +129,7 @@ static void gc(csxi *csx)
 
 char *csx_name(csxi *csx, const char *name)
 {
+    void *res;
     const int namesize = strlen(name) + 1;
     int i;
     for (i = 0; i != csx->objslen; ++i) {
@@ -136,7 +137,7 @@ char *csx_name(csxi *csx, const char *name)
         if (csx_obj(obj)->type != csx->basenames.name) continue;
         if (!strncmp(obj, name, namesize)) return obj;
     }
-    void *res = new(csx, csx->basenames.name, namesize);
+    res = new(csx, csx->basenames.name, namesize);
     memcpy(res, name, namesize);
     return res;
 }
@@ -158,15 +159,19 @@ int *csx_int(csxi *csx, int num)
 
 static void *run_each(csxi *i, void *l)
 {
+    int ret;
+    csxpair *res;
+    csxpair **p;
     if (csx_obj(l)->type != i->basenames.pair) return i->null;
     push(i, l);
-    int ret = i->stacklen;
-    csxpair *res = csx_pair(i, csx_run(i, head(l)), i->null);
-    csxpair **p = (csxpair **)&res->tail;
+    ret = i->stacklen;
+    res = csx_pair(i, csx_run(i, head(l)), i->null);
+    p = (csxpair **)&res->tail;
     l = tail(l);
     while (csx_obj(l)->type == i->basenames.pair) {
+        int resret;
         push(i, res);
-        int resret = i->stacklen;
+        resret = i->stacklen;
         *p = csx_pair(i, csx_run(i, head(l)), i->null);
         p = (csxpair **)&(*p)->tail;
         restore(i, resret);
@@ -206,11 +211,14 @@ static void *lookup(csxi *i, const char *name)
 
 static void *base_set(csxi *i, void *arg)
 {
+    int ret;
     csxpair *res;
+    void *name;
+    void *value;
     push(i, arg);
-    int ret = i->stacklen;
-    void *name = head(arg);
-    void *value = csx_run(i, head(tail(arg)));
+    ret = i->stacklen;
+    name = head(arg);
+    value = csx_run(i, head(tail(arg)));
     if (i->context == i->null) {
         void *nameval = csx_pair(i, name, value);
         i->context = csx_pair(i, csx_pair(i, nameval, i->null), i->null);
@@ -238,16 +246,18 @@ static void *base_is_set(csxi *i, void *arg)
 
 static void *base_sethead(csxi *i, void *arg)
 {
+    csxpair *p;
     arg = run_each(i, arg);
-    csxpair *p = head(arg);
+    p = head(arg);
     p->head = head(tail(arg));
     return i->null;
 }
 
 static void *base_settail(csxi *i, void *arg)
 {
+    csxpair *p;
     arg = run_each(i, arg);
-    csxpair *p = head(arg);
+    p = head(arg);
     p->tail = head(tail(arg));
     return i->null;
 }
@@ -330,8 +340,8 @@ static void *base_if(csxi *i, void *arg)
 
 static void *base_sum(csxi *i, void *arg)
 {
-    arg = run_each(i, arg);
     int res = 0;
+    arg = run_each(i, arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         int *num = head(arg);
         if (csx_obj(num)->type != i->basenames._int) exit(1);
@@ -343,8 +353,8 @@ static void *base_sum(csxi *i, void *arg)
 
 static void *base_prod(csxi *i, void *arg)
 {
-    arg = run_each(i, arg);
     int res = 1;
+    arg = run_each(i, arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         int *num = head(arg);
         if (csx_obj(num)->type != i->basenames._int) exit(1);
@@ -374,10 +384,11 @@ static void *base_mod(csxi *i, void *arg)
 
 static void *base_inc(csxi *i, void *arg)
 {
+    int num;
     arg = run_each(i, arg);
     if (csx_obj(arg)->type != i->basenames.pair ||
         csx_obj(head(arg))->type != i->basenames._int) return i->null;
-    int num = *(int *)head(arg);
+    num = *(int *)head(arg);
     arg = tail(arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         int *another = head(arg);
@@ -391,10 +402,11 @@ static void *base_inc(csxi *i, void *arg)
 
 static void *base_dec(csxi *i, void *arg)
 {
+    int num;
     arg = run_each(i, arg);
     if (csx_obj(arg)->type != i->basenames.pair ||
         csx_obj(head(arg))->type != i->basenames._int) return i->null;
-    int num = *(int *)head(arg);
+    num = *(int *)head(arg);
     arg = tail(arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         int *another = head(arg);
@@ -409,15 +421,17 @@ static void *base_dec(csxi *i, void *arg)
 
 static void *base_out(csxi *i, void *arg)
 {
+    int res;
     arg = run_each(i, arg);
-    int res = putchar(*(int *)head(arg));
+    res = putchar(*(int *)head(arg));
     return res != EOF ? i->one : i->null;
 }
 
 static void *base_in(csxi *i, void *arg)
 {
-    arg = run_each(i, arg);
-    int res = getchar();
+    int res;
+    run_each(i, arg);
+    res = getchar();
     return res != EOF ? csx_int(i, res) : i->null;
 }
 
@@ -430,13 +444,15 @@ static void *base_name(csxi *i, void *arg)
 
 static void *base_str(csxi *i, void *arg)
 {
+    void *t;
+    int reslen = 0;
+    char *res;
     arg = run_each(i, arg);
-    void *t = csx_obj(head(arg))->type;
+    t = csx_obj(head(arg))->type;
     if (t == i->basenames.name) return csx_str(i, head(arg));
     if (t == i->null) return csx_str(i, "");
     if (t != i->basenames.pair) exit(1);
-    int reslen = 0;
-    char *res = malloc(1);
+    res = malloc(1);
     arg = head(arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         res[reslen] = *(char *)head(arg);
@@ -449,11 +465,12 @@ static void *base_str(csxi *i, void *arg)
 
 static void *base_len(csxi *i, void *arg)
 {
+    void *t;
+    int len = 0;
     arg = run_each(i, arg);
-    void *t = csx_obj(head(arg))->type;
+    t = csx_obj(head(arg))->type;
     if (t == i->basenames.str) return csx_int(i, strlen(head(arg)));
     if (t != i->basenames.pair) exit(1);
-    int len = 0;
     arg = head(arg);
     while (csx_obj(arg)->type == i->basenames.pair) {
         arg = tail(arg);
@@ -464,13 +481,16 @@ static void *base_len(csxi *i, void *arg)
 
 static void *base_run(csxi *i, void *arg)
 {
+    int ret;
+    void *res;
+    void *rescontext;
     arg = run_each(i, arg);
     if (tail(arg) == i->null) return csx_run(i, head(arg));
     push(i, i->context);
-    int ret = i->stacklen;
+    ret = i->stacklen;
     i->context = head(tail(arg));
-    void *res = csx_run(i, head(arg));
-    void *rescontext = i->context;
+    res = csx_run(i, head(arg));
+    rescontext = i->context;
     restore(i, ret);
     i->context = pop(i);
     return csx_pair(i, res, rescontext);
@@ -492,8 +512,9 @@ static void *zip(csxi *i, void *params, void *values)
 
 void *csx_run(csxi *i, void *arg)
 {
+    int ret;
     push(i, arg);
-    int ret = i->stacklen;
+    ret = i->stacklen;
 tailcall:
     gc(i);
     if (csx_obj(arg)->type == i->basenames.name) {
@@ -519,8 +540,9 @@ tailcall:
             }
         } else if (csx_obj(fn)->type == i->basenames.fn) {
             void *res;
+            int fnret;
             push(i, i->context);
-            int fnret = i->stacklen;
+            fnret = i->stacklen;
             ops = run_each(i, ops);
             i->context = csx_pair(i, zip(i, fn->params, ops), fn->context);
             res = base_do(i, fn->body);
@@ -530,8 +552,9 @@ tailcall:
             pop(i);
             return res;
         } else if (csx_obj(fn)->type == i->basenames.sx) {
+            int sxret;
             push(i, i->context);
-            int sxret = i->stacklen;
+            sxret = i->stacklen;
             i->context = csx_pair(i, zip(i, fn->params, ops), fn->context);
             arg = base_do(i, fn->body);
             restore(i, sxret);
@@ -569,9 +592,10 @@ static void *base_context(csxi *i, void *args)  { return i->context; }
 static void new_context(csxi *i);
 static void *base_newcontext(csxi *i, void *args)
 {
+    void *res;
     push(i, i->context);
     new_context(i);
-    void *res = i->context;
+    res = i->context;
     i->context = pop(i);
     return res;
 }
